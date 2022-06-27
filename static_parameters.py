@@ -2,7 +2,7 @@ import openpyxl
 import pickle
 from process_values import ws_cell
 from process_values import max_row
-from dynamic_parameters import stock_k1
+
 
 
 def serialize(ls, filename):
@@ -57,3 +57,9 @@ dict_rule_upper = {ws_cell(ws_rule_type, row_num, 2): ws_cell(ws_rule_type, row_
 dict_rule_compare = {'发行银行核心一级资本充足率': '发行银行一级资本充足率', '发行银行一级资本充足率': '发行银行资本充足率', '发行保险公司核心偿付能力充足率': '发行保险公司综合偿付能力充足率'}
 dict_rule = {'not_null': dict_rule_null, 'type': dict_rule_type, 'valid': dict_rule_valid, 'lower': dict_rule_lower, 'upper': dict_rule_upper, 'compare': dict_rule_compare}
 ls_null_values = {'无', '-'}
+
+dict_asset_type_proportion = {'权益': 0.25,
+            '房地产': 0.25,
+            '其他': 0.25,
+            '境外': 0.15
+            }

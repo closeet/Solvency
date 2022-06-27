@@ -40,13 +40,11 @@ class MySqlConnection:
         try:
             cursor = self.db_session()
             cursor.execute(sql_query)
-            print(sql_query)
-            return cursor
-            # result = cursor.fetchall()
-            # if num is None:
-            #     return result
-            # else:
-            #     return result[:num]
+            result = cursor.fetchall()
+            if num is None:
+                return result
+            else:
+                return result[:num]
         except Exception as ex:
             print("Query Error:{}".format(ex))
         finally:

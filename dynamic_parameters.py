@@ -1,4 +1,7 @@
 from database import MySqlConnection
+from data_to_SQL import sb_solv
+
+
 def concentration_counter_party_threshold(total_asset):
     tier1 = 10000000000
     tier2 = 50000000000
@@ -21,23 +24,26 @@ def concentration_asset_type_threshold(total_asset_last_quarter, dict_asset_type
             }
 
 
-def stock_k1(ls_price, ls_cost):
-    if sum(ls_cost):
-        x = (sum(ls_price) - sum(ls_cost)) / sum(ls_cost)
-        if x >= 1:
-            return 1
-        elif 0 <= x < 1:
-            return x ** 2
-        elif -1 <= x < 0:
-            return -(x ** 2)
-        else:
-            return -1
+def stock_k1(price, cost):
+    x = (price - cost) / cost
+    if x >= 1:
+        return 1
+    elif 0 <= x < 1:
+        return x ** 2
+    elif -1 <= x < 0:
+        return -(x ** 2)
     else:
-        return 0
+        return -1
 
-"""---------------------------------"""
-ls_stock_price = []
-ls_stock_cost = []
-"""---------------------------------"""
-dict_k1 = {'涨跌幅': stock_k1(ls_stock_price, ls_stock_cost), '地区': 0.2, '市场类型': 0.25, '绿债': -0.1}
+
+total_asset = 374129517345.931
+
+
+sum_price_stock = sb_solv.sb_query("SELECT sum(`认可价值`) FROM solvency2.data_raw where `资产大类`='股票' and `表层资产简称`is null;")[0][0]
+sum_cost_stock = sb_solv.sb_query("SELECT sum(`购买成本`) FROM solvency2.data_raw where `资产大类`='股票' and `表层资产简称`is null;")[0][0]
+counter_party_all = sb_solv.sb_query("select `交易对手`, sum(`认可价值`) FROM solvency2.data_raw group by `交易对手` order by sum(`认可价值`) desc")
+asset_type_all = sb_solv.sb_query("select `资产五大类分类`, sum(`认可价值`) FROM solvency2.data_raw group by `资产五大类分类` order by sum(`认可价值`) desc")
+ls_counter_party = [counter_party_all[i][0] for i in range(len(counter_party_all)) if counter_party_all[i][1]>=concentration_counter_party_threshold(total_asset)]
+
+dict_k1 = {'涨跌幅': stock_k1(sum_price_stock, sum_cost_stock), '地区': 0.2, '市场类型': 0.25, '绿债': -0.1}
 
