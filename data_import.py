@@ -2,7 +2,7 @@ import openpyxl
 from process_values import ws_cell
 from process_values import max_row
 from static_parameters import *
-from Data_Manipulation import AssetData
+from Class_asset_data import AssetData
 
 
 def complete_data(data: dict, col: list):
@@ -65,7 +65,7 @@ def import_deposit(ws, dict_col_name_corr: dict, ls_colname: list):
             else:
                 dict_row[col] = None
         # print(dict_row)
-        dict_data[row_num-1] = dict_row
+        dict_data[row_num-1] = complete_data(dict_row, ls_col_all)
     return dict_data
 
 
@@ -90,7 +90,7 @@ def import_current_deposit(ws, dict_col_name_corr: dict, dict_col_value: dict, l
             else:
                 dict_row[col] = None
         # print(dict_row)
-        dict_data[row_num-1] = dict_row
+        dict_data[row_num-1] = complete_data(dict_row, ls_col_all)
     return dict_data
 
 
@@ -102,6 +102,9 @@ def import_invest_asset(ws, ls_col_name):
     dict_data = {row_num-1: {col_name: ws_cell(ws, row_num, dict_name_col[col_name]) for col_name in ls_col_name} for
                  row_num in range(2, max_row(ws)+1)}
     return dict_data
+
+
+# def import_noninvest_data(ws, dict)
 
 
 wb_deposit_data = openpyxl.load_workbook('资产端数据/定期存款-2022年5月.xlsx', data_only=True)

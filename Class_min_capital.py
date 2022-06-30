@@ -1,8 +1,6 @@
-import openpyxl
-import os
-from datetime import datetime
+from Class_asset_data import AssetData
+from dynamic_parameters import *
 from static_parameters import *
-from process_values import *
 
 ls_bond = ['政策性金融债券', '商业银行债券', '非银行金融债券', '银行发行的二级资本工具', '其他保险公司发行的次级债、资本补充债券',
            '企业债', '公司债', '短期融资券、超短期融资券', '中期票据', '政府支持机构债券', '同业存单', '信贷资产支持证券',
@@ -12,212 +10,38 @@ ls_bond_low_risk = ['政策性金融债券', '政府支持机构债券']
 ls_bond_spreads = [bond for bond in ls_bond if bond not in ls_bond_risk_free and bond not in ls_bond_low_risk]
 ls_green_bond = [bond for bond in ls_bond if bond not in ls_bond_low_risk]
 
-"""读取后序列化"""
-ls_core_city = []
-dict_developed_market = {}
-dict_type_capital_type = {}
-dict_exchange = {}
-
-
-def check_not_null(data):
-    if data is None:
-        return 1
-    else:
-        return 0
-
-
-def check_null(data):
-    if data is not None:
-        return 2
-    else:
-        return 0
-
-
-def check_type(data, data_type):
-    if data is not None:
-        if data_type == 'int':
-            if isinstance(data, int) or isinstance(data, float):
-                return 0
-            else:
-                return 3
-        else:
-            if isinstance(data, eval(data_type)):
-                return 0
-            else:
-                return 3
-
-
-def check_value(data, ls_valid):
-    if data is not None:
-        if data not in ls_valid:
-            return 4
-        else:
-            return 0
-
-
-def check_compare_number(data1, data2):
-    if data1 is not None and isinstance(data1, str) == 0 and data2 is not None and isinstance(data2, str) == 0:
-        if data1 > data2:
-            return 5
-        else:
-            return 0
-
-
-def check_l_limit(data, limit):
-    if data is not None and isinstance(data, str) == 0:
-        if data < limit:
-            return 6
-        else:
-            return 0
-
-
-def check_u_limit(data, limit):
-    if data is not None and isinstance(data, str) == 0:
-        if data > limit:
-            return 7
-        else:
-            return 0
-
-
-def data_check_process(check, dict_problem, cols):
-    global bull_data_check
-    dict_problem[cols] = check
-    bull_data_check = check
-
-
-def clean_null(data_type):
-    if data_type == 'int' or data_type == 'float':
-        return 0
-    if data_type == 'str':
-        return '未提供数据'
-    if data_type == 'datetime':
-        global evaluate_year, evaluate_month, evaluate_day
-        return datetime(evaluate_year, evaluate_month, evaluate_day)
-
-
-def clean_null_value(data_type):
-    if data_type == 'int' or data_type == 'float':
-        return 0
-    if data_type == 'datetime':
-        global evaluate_year, evaluate_month, evaluate_day
-        return datetime(evaluate_year, evaluate_month, evaluate_day)
-
-
-def clean_type(data, data_type):
-    if data_type == 'int' or data_type == 'float':
-        if isinstance(data, str) and data.find(',')+1:
-            data = ''.join(data.split(','))
-        return float(data)
-    if data_type == 'str':
-        return str(data)
-    if data_type == 'datetime':
-        return datetime(data)
-
-
-class AssetData:
-    def __init__(self, dict_data: dict):
-        self.value = list(dict_data.values())
-        self.col = list(dict_data.keys())
-        self.data = dict_data
-        self.data_raw = dict(zip(self.col, self.value))
-        self.value_not_null = [values for values in list(dict_data.values()) if values is not None]
-        self.col_not_null = [list(dict_data.keys())[i] for i, j in enumerate(list(dict_data.values())) if j is not None]
-        self.data_not_null = zip(self.col_not_null, self.value_not_null)
-        self.asset_type = self.data['资产类型']
-
-
-    def data_check(self):
-        global dict_rule
-        dict_data_rule = dict_rule
-        dict_problem = {}
-        bull_data_check = 0
-        if check_not_null(self.data['资产类型']):
-            dict_problem['资产类型'] = check_null(self.data['资产类型'])
-        else:
-            asset_type = self.asset_type
-            for cols_check in self.data.keys():
-                data_check = self.data[cols_check]
-                if cols_check in dict_data_rule['not_null'][asset_type] and check_not_null(data_check):
-                    data_check_process(check_not_null(data_check), dict_problem, cols_check)
-                if check_type(data_check, dict_data_rule['type'][cols_check]) and bull_data_check == 0:
-                    data_check_process(check_type(data_check, dict_data_rule['type'][cols_check]), dict_problem, cols_check)
-                if cols_check in dict_data_rule['valid'].keys() and bull_data_check == 0 \
-                        and check_value(data_check, dict_data_rule['valid'][cols_check]):
-                    data_check_process(check_value(data_check, dict_data_rule['valid'][cols_check]), dict_problem, cols_check)
-                if cols_check in dict_data_rule['upper'].keys() and bull_data_check == 0 and data_check is not None\
-                        and check_u_limit(data_check, dict_data_rule['upper'][cols_check]):
-                    data_check_process(check_u_limit(data_check, dict_data_rule['valid'][cols_check]), dict_problem, cols_check)
-                if cols_check in dict_data_rule['lower'].keys() and bull_data_check == 0 and data_check is not None\
-                        and check_l_limit(data_check, dict_data_rule['lower'][cols_check]):
-                    data_check_process(check_l_limit(data_check, dict_data_rule['valid'][cols_check]), dict_problem, cols_check)
-                if cols_check in dict_data_rule['compare'].keys() and bull_data_check == 0 and data_check is not None\
-                        and check_compare_number(data_check, self.data[dict_data_rule['compare'][cols_check]]):
-                    data_check_process(
-                        check_compare_number(data_check, self.data[dict_data_rule['compare'][cols_check]]), dict_problem, cols_check)
-                    dict_problem[dict_data_rule['compare'][cols_check]] = \
-                        check_compare_number(data_check, self.data[dict_data_rule['compare'][cols_check]])
-        return dict_problem
-
-    @property
-    def cleansed_data(self):
-        global ls_null_values, dict_rule
-        dict_data_rule = dict_rule
-        data_to_clean = {}
-        data_to_clean.update(self.data)
-        for col_clean in data_to_clean.keys():
-            if data_to_clean[col_clean] in ls_null_values:
-                data_to_clean[col_clean] = clean_null_value(dict_data_rule['type'][col_clean])
-        for col_problem in self.data_check().keys():
-            if self.data_check()[col_problem] == 1:
-                data_to_clean[col_problem] = clean_null(dict_data_rule['type'][col_problem])
-            if self.data_check()[col_problem] == 3:
-                data_to_clean[col_problem] = clean_type(data_to_clean[col_problem], dict_data_rule['type'][col_problem])
-        # data_to_clean['资产识别'] = self.asset_id
-        return data_to_clean
-
-    @property
-    def sd_data(self):
-        sd_data = {'资产识别': self.asset_id}
-        sd_data.update(self.cleansed_data)
-        return sd_data
-
-    @property
-    def asset_id(self):
-        return asset_id(self.data['资产简称'], self.data['产品代码'], self.data['表层资产简称'], self.data['表层资产产品代码'],
-                        self.data['账户'])
-
 
 class MinCapital(AssetData):
     @property
     def rf0(self):
         asset_type = self.asset_type
-        dur = self.data['修正久期']
-        rating = self.data['信用评级']
-        bank_type = self.data['存款银行类型']
-        bank_adequacy = self.data['银行资本充足率']
-        account_age = self.data['账龄']
+        dur = self.labeled_data['修正久期']
+        rating = self.labeled_data['信用评级']
+        bank_type = self.labeled_data['存款银行类型']
+        bank_adequacy = self.labeled_data['银行资本充足率']
+        account_age = self.labeled_data['账龄']
 
         """
         默认股指期货合约价值小于套保的股票价值，后续进行修正，对股指期货和套保股票的价值判断系数
         没有对境外固收、权益做出区分 仅适用境外上市股票 境外长股投
         不想写再保分出了 有点复杂 有空再说
-        
+
         """
 
         if asset_type == '沪深主板股':
             return 0.35
         elif asset_type == '创业板股' \
-                or self.data['资产类型'] == '科创板股':
+                or self.labeled_data['资产类型'] == '科创板股':
             return 0.45
         elif asset_type == '未上市股权':
             return 0.41
         elif asset_type == '对子公司的长股投' or asset_type == '对子公司的境外长股投':
-            if self.data['投资性质'] == '保险类子公司' or self.data['投资性质'] == '属于保险主业范围的子公司':
+            if self.labeled_data['投资对象性质'] == '保险类子公司' or self.labeled_data['投资对象性质'] == '属于保险主业范围的子公司':
                 return 0.35
             else:
                 return 1
         elif asset_type == '合营企业、联营企业的长股投' or asset_type == '合营企业、联营企业的境外长股投':
-            if self.data['是否在公开市场交易'] == '是':
+            if self.labeled_data['是否在公开市场交易'] == '是':
                 return 0.35
             else:
                 return 0.41
@@ -232,8 +56,8 @@ class MinCapital(AssetData):
         elif asset_type == '可转债' or asset_type == '可交换债':
             return 0.23
         elif asset_type == '股指期货空头合约':
-            if self.data['是否满足会计准则规定的套期有效性要求'] == '是':
-                if self.data['套期期限'] >= 1:
+            if self.labeled_data['是否满足会计准则规定的套期有效性要求'] == '是':
+                if self.labeled_data['套期期限'] >= 1:
                     return -0.35
                 else:
                     return 0
@@ -242,40 +66,40 @@ class MinCapital(AssetData):
         elif asset_type == '股指期货多头合约':
             return 0.35
         elif asset_type == '优先股' or asset_type == '无固定期限资本债券':
-            if self.data['是否带有强制转换为普通股或减记条款'] == '是':
-                if self.data['发行机构类型'] == '非金融机构':
+            if self.labeled_data['是否带有强制转换为普通股或减记条款'] == '是':
+                if self.labeled_data['发行机构类型'] == '非金融机构':
                     return 0.25
-                elif self.data['发行机构类型'] == '银行':
-                    if self.data['发行银行资本充足率'] < 0.08 \
-                            or self.data['发行银行一级资本充足率'] < 0.06 \
-                            or self.data['发行银行核心一级资本充足率'] < 0.05:
+                elif self.labeled_data['发行机构类型'] == '银行':
+                    if self.labeled_data['发行银行资本充足率'] < 0.08 \
+                            or self.labeled_data['发行银行一级资本充足率'] < 0.06 \
+                            or self.labeled_data['发行银行核心一级资本充足率'] < 0.05:
                         return 0.45
                     else:
-                        if self.data['发行银行类型'] == '政策性银行' or self.data['发行银行类型'] == '国有大型商业银行':
+                        if self.labeled_data['发行银行类型'] == '政策性银行' or self.labeled_data['发行银行类型'] == '国有大型商业银行':
                             return 0.15
-                        elif self.data['发行银行类型'] == '股份制商业银行':
+                        elif self.labeled_data['发行银行类型'] == '股份制商业银行':
                             return 0.2
-                        elif self.data['发行银行类型'] == '城市商业银行':
+                        elif self.labeled_data['发行银行类型'] == '城市商业银行':
                             return 0.25
                         else:
                             return 0.3
-                elif self.data['发行机构类型'] == '保险':
-                    if self.data['发行保险公司综合偿付能力充足率'] < 1 \
-                            or self.data['发行保险公司核心偿付能力充足率'] < 0.5:
+                elif self.labeled_data['发行机构类型'] == '保险':
+                    if self.labeled_data['发行保险公司综合偿付能力充足率'] < 1 \
+                            or self.labeled_data['发行保险公司核心偿付能力充足率'] < 0.5:
                         return 0.45
                     else:
                         return 0.15
-                elif self.data['发行机构类型'] == '资产管理公司':
-                    if self.data['发行银行资本充足率'] < 0.125 \
-                            or self.data['发行银行一级资本充足率'] < 0.1 \
-                            or self.data['发行银行核心一级资本充足率'] < 0.09:
+                elif self.labeled_data['发行机构类型'] == '资产管理公司':
+                    if self.labeled_data['发行银行资本充足率'] < 0.125 \
+                            or self.labeled_data['发行银行一级资本充足率'] < 0.1 \
+                            or self.labeled_data['发行银行核心一级资本充足率'] < 0.09:
                         return 0.45
                     else:
                         return 0.2
                 else:
                     pass
             else:
-                if self.data['发行机构类型'] == '非金融机构':
+                if self.labeled_data['发行机构类型'] == '非金融机构':
                     return 0.1
                 else:
                     return 0.15
@@ -448,7 +272,7 @@ class MinCapital(AssetData):
         elif asset_type == '非保本结构性存款' or asset_type == '未通过重大保险风险测试的保险业务所对应的应收及预付款':
             return 0.5
         elif asset_type == '应收保费':
-            if self.data['是否是享受各级政府保费补贴的业务'] == '是':
+            if self.labeled_data['是否是享受各级政府保费补贴的业务'] == '是':
                 if account_age == '不大于9个月':
                     return 0
                 elif account_age == '(6个月，12个月]':
@@ -483,15 +307,15 @@ class MinCapital(AssetData):
                 pass
         elif asset_type == '其他底层贷款资产' or asset_type == '保险公司向集团外的关联方提供的融资借款' \
                 or asset_type == '保险公司向其非控股的、经营投资性房地产业务的项目公司的各项融资借款':
-            if self.data['资产风险分类等级'] == '正常类':
+            if self.labeled_data['资产风险分类等级'] == '正常类':
                 return 0.085
-            elif self.data['资产风险分类等级'] == '关注类':
+            elif self.labeled_data['资产风险分类等级'] == '关注类':
                 return 0.135
-            elif self.data['资产风险分类等级'] == '次级类':
+            elif self.labeled_data['资产风险分类等级'] == '次级类':
                 return 0.3
-            elif self.data['资产风险分类等级'] == '可疑类':
+            elif self.labeled_data['资产风险分类等级'] == '可疑类':
                 return 0.5
-            elif self.data['资产风险分类等级'] == '损失类':
+            elif self.labeled_data['资产风险分类等级'] == '损失类':
                 return 1
             else:
                 pass
@@ -503,43 +327,16 @@ class MinCapital(AssetData):
             return 0
 
     @property
-    def data_type_penetration(self):
-        if self.data['表层资产简称'] is not None and self.data['资产简称'] == self.data['表层资产简称']:
-            return '豁免'
-        elif self.data['表层资产简称'] is not None:
-            return '穿透'
-        elif self.data['表层资产简称'] is None:
-            return '自持'
-        else:
-            print('穿透标识有误')
-
-    @property
-    def data_penetration(self):
-        if self.data_type_penetration == '穿透':
-            return '穿透'
-        elif self.data_type_penetration in ['豁免', '自持']:
-            return '自持'
-        else:
-            print('穿透情况有误')
-
-    @property
-    def data_foreign_invest(self):
-        if self.data['所在国家（地区）'] is not None:
-            return '境外'
-        else:
-            return '境内'
-
-    @property
     def k1(self):
         global dict_k1
-        if self.asset_type in ['沪深主板股', '创业板股', '科创板股'] and self.data_type_penetration == '自持':
+        if self.asset_type in ['沪深主板股', '创业板股', '科创板股'] and self.penetration_type == '自持':
             return dict_k1['涨跌幅']
         elif self.asset_type in ['投资性不动产物权', '不动产项目公司股权', '向控股的经营投资性房地产业务的项目公司提供的各项融资借款'] \
-                and self.data['所在城市'] not in ls_core_city:
+                and self.labeled_data['所在城市'] not in ls_core_city:
             return dict_k1['地区']
-        elif self.asset_type == ['境外权益类资产（其他权益类资产）'] and self.data['所在国家'] in dict_developed_market['developing']:
+        elif self.asset_type == ['境外权益类资产（其他权益类资产）'] and self.labeled_data['所在国家（地区）'] in ls_country_developing:
             return dict_k1['市场类型']
-        elif self.asset_type in ls_green_bond and self.data['是否为支持碳减排项目的绿色债券'] == '是':
+        elif self.asset_type in ls_green_bond and self.labeled_data['是否为支持碳减排项目的绿色债券'] == '是':
             return dict_k1['绿债']
         else:
             return 0
@@ -547,7 +344,7 @@ class MinCapital(AssetData):
     @property
     def k2(self):
         if self.asset_type in ['沪深主板股', '创业板股', '科创板股', '境外权益类资产（其他权益类资产）'] \
-                and self.data['是否为沪深300成分股'] == '是':
+                and self.labeled_data['是否为沪深300成分股'] == '是':
             return -0.05
         else:
             return 0
@@ -555,7 +352,7 @@ class MinCapital(AssetData):
     @property
     def k_concentration_counter_party(self):
         global ls_counter_party
-        if self.data['交易对手'] in ls_counter_party:
+        if self.labeled_data['交易对手'] in ls_counter_party:
             return 0.4
         else:
             return 0
@@ -563,17 +360,20 @@ class MinCapital(AssetData):
     @property
     def k_concentration_asset_type(self):
         global ls_asset_type
-        if self.data['资产五大类'] in ls_asset_type:
+        if self.labeled_data['资产五大类分类'] in ls_asset_type:
             return 0.2
         else:
             return 0
 
     @property
     def k_layer(self):
-        if self.data['表层资产类型'] in ['固定收益类信托计划', '债权投资计划', '资产支持计划']:
-            return (self.data['交易层级'] - 1) * 0.1
+        if self.labeled_data['交易层级'] is not None:
+            if self.labeled_data['表层资产类型'] in ['固定收益类信托计划', '债权投资计划', '资产支持计划']:
+                return (self.labeled_data['交易层级'] - 1) * 0.1
+            else:
+                return self.labeled_data['交易层级'] * 0.1
         else:
-            return self.data['交易层级'].data * 0.1
+            return 0
 
     @property
     def k_sum(self):
@@ -582,60 +382,92 @@ class MinCapital(AssetData):
     @property
     def minimum_capital(self):
         if self.asset_type == '股指期货空头':
-            return self.data['认可价值'] * self.rf0 * self.data['套期有效性']
+            return self.labeled_data['认可价值'] * self.rf0 * self.labeled_data['套期有效性']
         else:
-            return self.data['认可价值'] * self.rf0 * self.k_sum
+            return self.labeled_data['认可价值'] * self.rf0 * self.k_sum
 
     @property
     def minimum_capital_type(self):
-        return dict_type_capital_type[self.asset_type]
+        return dict_risk_type[self.asset_type]
 
     @property
     def interest_minimum_capital(self):
-        if self.data['应收利息'] is not None:
+        if self.labeled_data['应收利息'] is not None:
             if self.minimum_capital_type == '利差':
-                if self.data['信用评级'] == 'AAA' or self.asset_type in ls_bond_low_risk:
+                if self.labeled_data['信用评级'] == 'AAA' or self.asset_type in ls_bond_low_risk:
                     rf_interest = 0.006
-                elif self.data['信用评级'] in ['AA+', 'AA', 'AA-']:
+                elif self.labeled_data['信用评级'] in ['AA+', 'AA', 'AA-']:
                     rf_interest = 0.015
-                elif self.data['信用评级'] in ['A+', 'A', 'A-']:
+                elif self.labeled_data['信用评级'] in ['A+', 'A', 'A-']:
                     rf_interest = 0.025
                 else:
                     rf_interest = 0.03
-            if self.minimum_capital_type == '违约':
+            elif self.minimum_capital_type == '违约':
                 rf_interest = self.rf0
-            return rf_interest * self.k_sum * self.data['应收利息']
+            else:
+                rf_interest = 0
+            return rf_interest * self.k_sum * self.labeled_data['应收利息']
         else:
             return 0
 
     @property
     def surface_minimum_capital(self):
-        if self.data['表层资产信用评级'] == 'AAA':
-            rf_surface = 0.01
-        elif self.data['表层资产信用评级'] == 'AA+':
-            rf_surface = 0.015
-        elif self.data['表层资产信用评级'] == 'AA':
-            rf_surface = 0.020
-        elif self.data['表层资产信用评级'] == 'AA-':
-            rf_surface = 0.025
-        elif self.data['表层资产信用评级'] in ['A+', 'A', 'A-']:
-            rf_surface = 0.075
+        if self.labeled_data['表层资产信用评级'] is not None:
+            if self.labeled_data['表层资产信用评级'] == 'AAA':
+                rf_surface = 0.01
+            elif self.labeled_data['表层资产信用评级'] == 'AA+':
+                rf_surface = 0.015
+            elif self.labeled_data['表层资产信用评级'] == 'AA':
+                rf_surface = 0.020
+            elif self.labeled_data['表层资产信用评级'] == 'AA-':
+                rf_surface = 0.025
+            elif self.labeled_data['表层资产信用评级'] in ['A+', 'A', 'A-']:
+                rf_surface = 0.075
+            else:
+                rf_surface = 0.15
+            if self.labeled_data['表层资产类型'] == '债权投资计划':
+                k_surface = -0.2
+            else:
+                k_surface = 0
+            return self.labeled_data['表层资产认可价值'] * rf_surface * (1 + k_surface)
         else:
-            rf_surface = 0.15
-        if self.data['表层资产类型'] == '债权投资计划':
-            k_surface = -0.2
-        else:
-            k_surface = 0
-        return self.data['表层资产认可价值'] * rf_surface * (1 + k_surface)
+            return 0
 
     @property
     def exchange_minimum_capital(self):
-        if dict_exchange[self.data['所在国家']] == '美元':
-            rf_exchange = 0.05
-        elif dict_exchange[self.data['所在国家']] in ['欧元', '英镑']:
-            rf_exchange = 0.08
-        elif dict_exchange[self.data['所在国家']] == '其他货币':
-            rf_exchange = 0.15
+        if self.labeled_data['所在国家（地区）'] is not None:
+            if dict_country_currency[self.labeled_data['所在国家（地区）']] == '美元':
+                rf_exchange = 0.05
+            elif dict_country_currency[self.labeled_data['所在国家（地区）']] in ['欧元', '英镑']:
+                rf_exchange = 0.08
+            elif dict_country_currency[self.labeled_data['所在国家（地区）']] == '其他货币':
+                rf_exchange = 0.15
+            else:
+                pass
+            return rf_exchange * self.k_sum * self.labeled_data['认可价值']
         else:
-            pass
-        return rf_exchange * self.k_sum * self.data['认可价值']
+            return 0
+
+    @property
+    def total_min_cap(self):
+        return self.minimum_capital + self.interest_minimum_capital + self.surface_minimum_capital + self.exchange_minimum_capital
+
+    @property
+    def counter_party_min_cap(self):
+        return (self.k_concentration_counter_party / self.k_sum) * self.minimum_capital
+
+    @property
+    def asset_type_min_cap(self):
+        return (self.k_concentration_asset_type / self.k_sum) * self.minimum_capital
+
+    @property
+    def calc_data(self):
+        calc_data = {'RF0': self.rf0, 'K1': self.k1, 'K2': self.k2, 'K交易对手': self.k_concentration_counter_party,
+                     'K大类资产': self.k_concentration_asset_type, 'K交易层级': self.k_layer, '调整因子': self.k_sum,
+                     '最低资本': self.minimum_capital, '最低资本类型': self.minimum_capital_type,
+                     '应收利息最低资本': self.interest_minimum_capital, '表层资产最低资本': self.surface_minimum_capital,
+                     '汇率最低资本': self.exchange_minimum_capital, '最低资本和': self.total_min_cap,
+                     '交易对手最低资本': self.counter_party_min_cap, '大类资产最低资本': self.asset_type_min_cap
+                     }
+        calc_data.update(self.labeled_data)
+        return calc_data
