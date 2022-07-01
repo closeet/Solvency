@@ -3,7 +3,7 @@ from process_values import ws_cell
 from process_values import max_row
 from static_parameters import *
 from Class_asset_data import AssetData
-from process_values import cut_list
+
 
 
 def complete_data(data: dict, col: list):

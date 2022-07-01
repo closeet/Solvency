@@ -414,7 +414,7 @@ class MinCapital(AssetData):
 
     @property
     def surface_minimum_capital(self):
-        if self.labeled_data['表层资产信用评级'] is not None:
+        if self.labeled_data['表层资产类型'] in ['债权投资计划', '资产支持计划', '固定收益类信托计划']:
             if self.labeled_data['表层资产信用评级'] == 'AAA':
                 rf_surface = 0.01
             elif self.labeled_data['表层资产信用评级'] == 'AA+':
