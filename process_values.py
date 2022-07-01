@@ -71,3 +71,17 @@ def max_row(ws):
             data_raw_max_row = row_max_row - 1
             break
     return data_raw_max_row
+
+
+def cut_list(lists, cut_len):
+    res_data = []
+    if len(lists) > cut_len:
+        for i in range(int(len(lists)/cut_len)):
+            cut_a = lists[cut_len*i: cut_len*(i+1)]
+            res_data.append(cut_a)
+        last_data = lists[int(len(lists)/cut_len)*cut_len:]
+        if last_data:
+            res_data.append(last_data)
+    else:
+        res_data.append(lists)
+    return res_data

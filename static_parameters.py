@@ -35,6 +35,9 @@ dict_bank_counter_party = {ws_cell(ws_rule_bank, row_num, 1): ws_cell(ws_rule_ba
                            range(1, ws_rule_bank.max_row + 1) if ws_cell(ws_rule_bank, row_num, 1) is not None}
 
 ls_col_all = [ws_cell(ws_rule_type, row_num, 2) for row_num in range(1, max_row(ws_rule_type) + 1)]
+ls_col_non_invest = ['资产简称',  '资产大类', '资产类型', '交易对手', '认可价值', '应收利息', '账户', '所在城市', '投资时间', '计量属性',
+                     '账面价值', '是否是享受各级政府保费补贴的业务', '账龄']
+
 
 ls_core_city = [ws_cell(ws_rule_others, row_num, 3) for row_num in range(2, ws_rule_others.max_row + 1) if
                 ws_cell(ws_rule_others, row_num, 3) is not None]

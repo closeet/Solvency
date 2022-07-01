@@ -321,6 +321,8 @@ class MinCapital(AssetData):
                 pass
         elif asset_type == '债务担保':
             return 0.3
+        elif asset_type == '保单质押贷款':
+            return 0.05
         elif asset_type == '国债' or asset_type == '地方政府债':
             return 0
         else:

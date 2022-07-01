@@ -6,8 +6,9 @@ from numpy import array
 from process_values import asset_id
 from process_values import ws_cell
 from process_values import sql_value_lize
-from process_values import sql_field_lize
+from process_values import sql_field_lize, cut_list
 from process_values import max_row
+
 
 
 class MySqlConnection:
@@ -50,28 +51,43 @@ class MySqlConnection:
         finally:
             self.close
 
-    def insert(self, table_name, col_name, values):
+    def insert(self, table_name, col_name, values, ls_sql=None):
         try:
             if len(array(values).shape) == 1:
                 str_values = "({})".format(sql_value_lize(values))
+                str_col_name = "({})".format(sql_field_lize(col_name))
+                sql = """INSERT INTO `{0}` {1}
+                 VALUES{2}""".format(table_name, str_col_name, str_values)
+                print(sql)
+                # ls_sql.append(sql)
+                cursor = self.db_session()
+                cursor.execute(sql)
+                self.db.commit()
             else:
-                ls_values = []
-                for ls in values:
-                    # print(ls)
-                    # print(sql_value_lize(ls))
-                    ls_values.append(("({})".format(sql_value_lize(ls))))
-                    # print(ls_values)
-                str_values = ', '.join(ls_values)
-            str_col_name = "({})".format(sql_field_lize(col_name))
-            sql = """INSERT INTO `{0}` {1}
-             VALUES{2}""".format(table_name, str_col_name, str_values)
-            print(sql)
-            cursor = self.db_session()
-            cursor.execute(sql)
-            self.db.commit()
+
+                values_cut = cut_list(values, 800)
+                for value in values_cut:
+                    ls_values = []
+                    for ls in value:
+                        # print(ls)
+                        # print(sql_value_lize(ls))
+                        ls_values.append(("({})".format(sql_value_lize(ls))))
+                        # print(ls_values)
+                    str_values = ', '.join(ls_values)
+                    str_col_name = "({})".format(sql_field_lize(col_name))
+                    sql = """INSERT INTO `{0}` {1}
+                     VALUES{2}""".format(table_name, str_col_name, str_values)
+                    print(sql)
+                    # ls_sql.append(sql)
+                    cursor = self.db_session()
+                    cursor.execute(sql)
+                    self.db.commit()
         except Exception as ex:
             print("Insertion Error: {}".format(ex))
             self.db.rollback()
+        finally:
+            self.close()
+            # return ls_sql
 
     def sql_exec(self, sql_string):
         try:

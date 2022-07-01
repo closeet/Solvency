@@ -1,6 +1,7 @@
 from database import MySqlConnection, table_name_raw, table_name_labeled
 from data_to_SQL import db_solv
 from static_parameters import *
+from database_setting import *
 
 
 def concentration_counter_party_threshold(total_asset):
@@ -41,13 +42,13 @@ total_asset = 374129517345.931
 total_asset_last_quarter = 374754445787.27
 
 
-sum_price_stock = db_solv.sql_query("SELECT sum(`认可价值`) FROM solvency_data." + table_name_raw + " where `资产大类`='股票' and `表层资产简称`is null;")[0][0]
-sum_cost_stock = db_solv.sql_query("SELECT sum(`购买成本`) FROM solvency_data." + table_name_raw + " where `资产大类`='股票' and `表层资产简称`is null;")[0][0]
-counter_party_all = db_solv.sql_query("select `交易对手`, sum(`认可价值`) FROM solvency_data." + table_name_raw + " group by `交易对手` order by sum(`认可价值`) desc")
-asset_type_all = db_solv.sql_query("select `资产五大类分类`, sum(`认可价值`) FROM solvency_data." + table_name_raw + " group by `资产五大类分类` order by sum(`认可价值`) desc")
+sum_price_stock = db_solv.sql_query("SELECT sum(`认可价值`) FROM " + db_database + "." + table_name_raw + " where `资产大类`='股票' and `表层资产简称`is null;")[0][0]
+sum_cost_stock = db_solv.sql_query("SELECT sum(`购买成本`) FROM " + db_database + "." + table_name_raw + " where `资产大类`='股票' and `表层资产简称`is null;")[0][0]
+counter_party_all = db_solv.sql_query("select `交易对手`, sum(`认可价值`) FROM " + db_database + "." + table_name_raw + " group by `交易对手` order by sum(`认可价值`) desc")
+asset_type_all = db_solv.sql_query("select `资产五大类分类`, sum(`认可价值`) FROM " + db_database + "." + table_name_raw + " group by `资产五大类分类` order by sum(`认可价值`) desc")
 ls_counter_party = [counter_party_all[i][0] for i in range(len(counter_party_all)) if counter_party_all[i][1]>=concentration_counter_party_threshold(total_asset)]
 
-sum_foreign_asset = db_solv.sql_query("select sum from (select `境内外`, sum(`认可价值`) as sum from solvency_data." +
+sum_foreign_asset = db_solv.sql_query("select sum from (select `境内外`, sum(`认可价值`) as sum from " + db_database + "." +
                                       table_name_labeled + " where `是否穿透` = '未穿透' group by `境内外`) a where `境内外` = '境外';")[0][0]
 dict_k1 = {'涨跌幅': stock_k1(sum_price_stock, sum_cost_stock), '地区': 0.2, '市场类型': 0.25, '绿债': -0.1}
 dict_asset_type_all = {asset_type_all[i][0]: asset_type_all[i][1] for i in range(len(asset_type_all))}
