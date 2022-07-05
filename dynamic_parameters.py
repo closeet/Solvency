@@ -1,4 +1,4 @@
-from database import MySqlConnection, table_name_raw, table_name_labeled
+from database import table_name_raw, table_name_labeled
 from data_to_SQL import db_solv
 from static_parameters import *
 from database_setting import *

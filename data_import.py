@@ -1,9 +1,5 @@
-import openpyxl
-from process_values import ws_cell
-from process_values import max_row
 from static_parameters import *
 from Class_asset_data import AssetData
-
 
 
 def complete_data(data: dict, col: list):
@@ -65,7 +61,6 @@ def import_deposit(ws, dict_col_name_corr: dict, ls_colname: list):
                 dict_row[col] = '固定收益类资产'
             else:
                 dict_row[col] = None
-        # print(dict_row)
         dict_data[row_num-1] = complete_data(dict_row, ls_col_all)
     return dict_data
 
@@ -90,7 +85,6 @@ def import_current_deposit(ws, dict_col_name_corr: dict, dict_col_value: dict, l
                 dict_row[col] = bank_counter_party(dict_row_raw['帐户信息'], dict_bank_counter_party)
             else:
                 dict_row[col] = None
-        # print(dict_row)
         dict_data[row_num-1] = complete_data(dict_row, ls_col_all)
     return dict_data
 
@@ -98,8 +92,6 @@ def import_current_deposit(ws, dict_col_name_corr: dict, dict_col_value: dict, l
 def import_invest_asset(ws, ls_col_name):
     ls_col_name_raw = [ws_cell(ws, 1, col_num) for col_num in range(1, ws.max_column+1)]
     dict_name_col = {col_name: ls_col_name_raw.index(col_name)+1 for col_name in ls_col_name}
-    # row_num = 2
-    # print({col_name: ws_cell(ws, row_num, dict_name_col[col_name]) for col_name in ls_col_name})
     dict_data = {row_num-1: {col_name: ws_cell(ws, row_num, dict_name_col[col_name]) for col_name in ls_col_name} for
                  row_num in range(2, max_row(ws)+1)}
     return dict_data
@@ -108,8 +100,6 @@ def import_invest_asset(ws, ls_col_name):
 def import_non_invest_data(ws, ls_col_name):
     ls_col_name_raw = [ws_cell(ws, 2, col_num) for col_num in range(1, ws.max_column+1)]
     dict_name_col = {col_name: ls_col_name_raw.index(col_name)+1 for col_name in ls_col_name}
-    # row_num = 2
-    # print({col_name: ws_cell(ws, row_num, dict_name_col[col_name]) for col_name in ls_col_name})
     dict_data = {row_num-2: {col_name: ws_cell(ws, row_num, dict_name_col[col_name]) for col_name in ls_col_name} for
                  row_num in range(3, max_row(ws)+1)}
     for i in dict_data.keys():
@@ -160,12 +150,3 @@ for data in ls_data_all:
 ls_col_sd_data = list(asset.sd_data.keys())
 ls_col_labeled_data = list(asset.labeled_data.keys())
 
-'''###########################################################################################################'''
-# complete_data(data_deposit[1], ls_col_all)
-#
-# asset = AssetData(data_invest_asset[831])
-# # ls_result = asset.data_check()
-# from database import MySqlConnection
-# sb_solv = MySqlConnection(host="localhost", user="root", password="19981027phy", database="solvency2")
-# # sb_solv.connect_db()
-# sb_solv.insert("data_raw", asset.sd_data.keys(), list(asset.sd_data.values()))

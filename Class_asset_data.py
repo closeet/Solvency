@@ -1,17 +1,6 @@
-import openpyxl
-import os
 from datetime import datetime
 from static_parameters import *
 from process_values import *
-# from dynamic_parameters import *
-
-
-
-"""读取后序列化"""
-ls_core_city = []
-dict_developed_market = {}
-dict_type_capital_type = {}
-dict_exchange = {}
 
 
 def check_not_null(data):

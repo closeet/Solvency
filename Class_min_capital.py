@@ -152,7 +152,7 @@ class MinCapital(AssetData):
                     return dur * (dur * 0.001 + 0.033)
                 else:
                     pass
-            elif rating == 'A+':
+            elif rating in ('A+', 'A-1+'):
                 if dur > 5:
                     return dur * 0.05
                 elif 0 <= dur <= 5:
@@ -166,7 +166,7 @@ class MinCapital(AssetData):
                     return dur * (dur * 0.003 + 0.045)
                 else:
                     pass
-            elif rating == 'A-':
+            elif rating in ('A-', 'A-1'):
                 if dur > 5:
                     return dur * 0.07
                 elif 0 <= dur <= 5:
@@ -288,7 +288,7 @@ class MinCapital(AssetData):
                     return 0
                 elif account_age == '(6个月，12个月]':
                     return 0.5
-                elif account_age == '(12个月，18个月]' or account_age == '18个月以上':
+                elif account_age in ['(12个月，18个月]', '18个月以上', '12个月以上']:
                     return 1
                 else:
                     pass
