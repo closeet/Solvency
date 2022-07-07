@@ -1,6 +1,6 @@
 from static_parameters import *
 from Class_asset_data import AssetData
-
+import time
 
 def complete_data(data: dict, col: list):
     data_complete = {}
@@ -114,6 +114,8 @@ def import_non_invest_data(ws, ls_col_name):
 
     return dict_data
 
+time_start = time.time()
+print('正在提取并清洗数据......')
 
 wb_deposit_data = openpyxl.load_workbook('资产端数据/定期存款-2022年5月.xlsx', data_only=True)
 wb_current_deposit_date = openpyxl.load_workbook('资产端数据/活期存款科目余额表.xlsx')
@@ -150,3 +152,5 @@ for data in ls_data_all:
 ls_col_sd_data = list(asset.sd_data.keys())
 ls_col_labeled_data = list(asset.labeled_data.keys())
 
+time_end = time.time()
+print('导入并清洗数据用时{}秒'.format(time_end - time_start))

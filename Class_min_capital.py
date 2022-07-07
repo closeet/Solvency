@@ -25,6 +25,7 @@ class MinCapital(AssetData):
         默认股指期货合约价值小于套保的股票价值，后续进行修正，对股指期货和套保股票的价值判断系数
         没有对境外固收、权益做出区分 仅适用境外上市股票 境外长股投
         不想写再保分出了 有点复杂 有空再说
+        对无法穿透和豁免穿透没有作出区分，按照公司现行资产配置默认设置为豁免
 
         """
 
@@ -325,6 +326,27 @@ class MinCapital(AssetData):
             return 0.05
         elif asset_type == '国债' or asset_type == '地方政府债':
             return 0
+        elif asset_type in ['货币市场类保险资管产品', '现金管理类商业银行理财产品']:
+            return 0.01
+        elif asset_type in ['固定收益类保险资管产品', '固定收益类商业银行理财产品']:
+            return 0.06
+        elif asset_type in ['权益类保险资管产品', '权益类商业银行理财产品']:
+            return 0.28
+        elif asset_type in ['混合类保险资管产品', '混合类商业银行理财产品', '商品及金融衍生品类保险资管产品', '商品及金融衍生品类商业银行理财产品']:
+            return 0.23
+        elif asset_type == '资产支持计划':
+            if self.labeled_data['表层资产信用评级'] == 'AAA':
+                return 0.1
+            elif self.labeled_data['表层资产信用评级'] == 'AA+':
+                return 0.13
+            elif self.labeled_data['表层资产信用评级'] == 'AA':
+                return 0.18
+            elif self.labeled_data['表层资产信用评级'] == 'AA-':
+                return 0.23
+            elif self.labeled_data['表层资产信用评级'] in ('A+', 'A', 'A-'):
+                return 0.33
+            else:
+                return 0.45
         else:
             return 0
 
@@ -379,14 +401,14 @@ class MinCapital(AssetData):
 
     @property
     def k_sum(self):
-        return 1 + self.k1 + self.k2 + self.k_concentration_counter_party + self.k_concentration_asset_type + self.k_layer
+        if self.asset_type == '股指期货空头合约':
+            return self.labeled_data['套期有效性'] * (1 + self.k1 + self.k2 + self.k_concentration_counter_party + self.k_concentration_asset_type + self.k_layer)
+        else:
+            return 1 + self.k1 + self.k2 + self.k_concentration_counter_party + self.k_concentration_asset_type + self.k_layer
 
     @property
     def minimum_capital(self):
-        if self.asset_type == '股指期货空头':
-            return self.labeled_data['认可价值'] * self.rf0 * self.labeled_data['套期有效性']
-        else:
-            return self.labeled_data['认可价值'] * self.rf0 * self.k_sum
+        return self.labeled_data['认可价值'] * self.rf0 * self.k_sum
 
     @property
     def minimum_capital_type(self):

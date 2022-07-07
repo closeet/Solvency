@@ -1,16 +1,11 @@
-# This is a sample Python script.
+import time
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    time_start_all = time.time()
+    from data_to_SQL import data_to_sql
+    data_to_sql()
+    from calculation_to_sql import calc_to_sql
+    calc_to_sql()
+    time_end_all = time.time()
+    print('共用时{}秒'.format(time_end_all - time_start_all))
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/

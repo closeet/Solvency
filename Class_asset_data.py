@@ -156,13 +156,17 @@ class AssetData:
                 data_to_clean[col_problem] = clean_null(dict_data_rule['type'][col_problem])
             if self.data_check()[col_problem] == 3:
                 data_to_clean[col_problem] = clean_type(data_to_clean[col_problem], dict_data_rule['type'][col_problem])
-        # data_to_clean['资产识别'] = self.asset_id
         return data_to_clean
 
     @property
     def sd_data(self):
         sd_data = {'资产识别': self.asset_id}
         sd_data.update(self.cleansed_data)
+        for key, value in sd_data.items():
+            if key in dict_vague_value.keys():
+                for key_, ls_value_ in dict_vague_value[key].items():
+                    if value in ls_value_:
+                        sd_data[key] = key_
         return sd_data
 
     @property

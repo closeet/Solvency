@@ -50,7 +50,7 @@ class MySqlConnection:
                 str_col_name = "({})".format(sql_field_lize(col_name))
                 sql = """INSERT INTO `{0}` {1}
                  VALUES{2}""".format(table_name, str_col_name, str_values)
-                print(sql)
+                # print(sql)
                 # ls_sql.append(sql)
                 cursor = self.db_session()
                 cursor.execute(sql)
@@ -69,7 +69,7 @@ class MySqlConnection:
                     str_col_name = "({})".format(sql_field_lize(col_name))
                     sql = """INSERT INTO `{0}` {1}
                      VALUES{2}""".format(table_name, str_col_name, str_values)
-                    print(sql)
+                    # print(sql)
                     # ls_sql.append(sql)
                     cursor = self.db_session()
                     cursor.execute(sql)
@@ -84,7 +84,7 @@ class MySqlConnection:
     def sql_exec(self, sql_string):
         try:
             cursor = self.db_session()
-            print("EXECUTING: {0}".format(sql_string))
+            # print("EXECUTING: {0}".format(sql_string))
             cursor.execute(sql_string)
             self.db.commit()
         except Exception as ex:
