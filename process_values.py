@@ -7,37 +7,40 @@ def str_lize(string):
 
 
 def asset_id(product_name, product_id, com_asset_name=None, com_asset_id=None, account=None):
-    ls_id = [str_lize(account)]
+    try:
+        ls_id = [str_lize(account)]
 
-    if product_id == com_asset_id or product_name == com_asset_name:  # 标记豁免为自持
-        com_asset_id = None
-        com_asset_name = None
-    if com_asset_id is None and com_asset_name is None:  # 自持资产
-        ls_id.append('自持')
+        if product_id == com_asset_id or product_name == com_asset_name:  # 标记豁免为自持
+            com_asset_id = None
+            com_asset_name = None
+        if com_asset_name is None:  # 自持资产
+            ls_id.append('自持')
+            # print(ls_id)
+            if product_id is None:  # 非标
+                ls_id.append(str_lize(product_name))
+                # print(ls_id)
+            else:  # 标
+                ls_id.append(str_lize(product_id))
+                # print(ls_id)
+        else:  # 穿透
+            if com_asset_id is None:
+                ls_id.append(str_lize(com_asset_name))
+                # print(ls_id)
+            else:
+                ls_id.append(str_lize(com_asset_id))
+                # print(ls_id)
+            if product_id is None:  # 非标
+                # print(2.1)
+                ls_id.append(str_lize(product_name))
+                # print(ls_id)
+            else:  # 标
+                ls_id.append(str_lize(product_id))
+                # print(ls_id)
         # print(ls_id)
-        if product_id is None:  # 非标
-            ls_id.append(str_lize(product_name))
-            # print(ls_id)
-        else:  # 标
-            ls_id.append(str_lize(product_id))
-            # print(ls_id)
-    else:  # 穿透
-        if com_asset_id is None:
-            ls_id.append(str_lize(com_asset_name))
-            # print(ls_id)
-        else:
-            ls_id.append(str_lize(com_asset_id))
-            # print(ls_id)
-        if product_id is None:  # 非标
-            # print(2.1)
-            ls_id.append(str_lize(product_name))
-            # print(ls_id)
-        else:  # 标
-            ls_id.append(str_lize(product_id))
-            # print(ls_id)
-    # print(ls_id)
-    # print('-'.join(ls_id))
-    return '-'.join(ls_id)
+        # print('-'.join(ls_id))
+        return '-'.join(ls_id)
+    except:
+        print(ls_id)
 
 
 def ws_cell(ws, row_num, col_num):

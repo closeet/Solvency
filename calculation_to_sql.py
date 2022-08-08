@@ -2,7 +2,7 @@ from data_import import *
 from Class_min_capital import MinCapital
 from database import *
 import time
-from database_setting import *
+from database_setting import ls_setting_asset
 from dynamic_parameters import *
 
 
@@ -16,7 +16,7 @@ def calc_to_sql():
     ls_col_calc_data = list(mc.calc_data.keys())
     time_end = time.time()
     print('计算最低资本用时{}秒'.format(time_end - time_start))
-    db_solv = MySqlConnection(host=db_host, user=db_user, password=db_password, database=db_database)
+    db_solv = MySqlConnection(*ls_setting_asset)
 
     time_start = time.time()
     print('正在导入计算结果......')

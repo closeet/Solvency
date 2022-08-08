@@ -43,34 +43,26 @@ class MySqlConnection:
         finally:
             self.close
 
-    def insert(self, table_name, col_name, values, ls_sql=None):
+    def insert(self, table_name, col_name, values):
         try:
             if len(array(values).shape) == 1:
                 str_values = "({})".format(sql_value_lize(values))
                 str_col_name = "({})".format(sql_field_lize(col_name))
                 sql = """INSERT INTO `{0}` {1}
                  VALUES{2}""".format(table_name, str_col_name, str_values)
-                # print(sql)
-                # ls_sql.append(sql)
                 cursor = self.db_session()
                 cursor.execute(sql)
                 self.db.commit()
             else:
-
                 values_cut = cut_list(values, 800)
                 for value in values_cut:
                     ls_values = []
                     for ls in value:
-                        # print(ls)
-                        # print(sql_value_lize(ls))
                         ls_values.append(("({})".format(sql_value_lize(ls))))
-                        # print(ls_values)
                     str_values = ', '.join(ls_values)
                     str_col_name = "({})".format(sql_field_lize(col_name))
                     sql = """INSERT INTO `{0}` {1}
                      VALUES{2}""".format(table_name, str_col_name, str_values)
-                    # print(sql)
-                    # ls_sql.append(sql)
                     cursor = self.db_session()
                     cursor.execute(sql)
                     self.db.commit()
@@ -79,7 +71,6 @@ class MySqlConnection:
             self.db.rollback()
         finally:
             self.close()
-            # return ls_sql
 
     def sql_exec(self, sql_string):
         try:
@@ -94,19 +85,34 @@ class MySqlConnection:
             self.close()
 
 
-evaluate_year = 2022
-evaluate_month = 5
-evaluate_day = 30
-evaluate_date_str = str(evaluate_year) + str(evaluate_month).rjust(2, '0') + str(evaluate_day)
+evaluate_year = "2022"
+# evaluate_month = input("评估时点月份：")
+evaluate_month = '6'
+if evaluate_month in ['1', '3', '5', '7', '8', '10', '12']:
+    evaluate_day = '31'
+elif evaluate_month in ['4', '6', '9', '11']:
+    evaluate_day = '30'
+elif evaluate_month == '2':
+    if int(evaluate_year) % 4 == 0:
+        evaluate_day = '29'
+    else:
+        evaluate_day = '28'
+else:
+    print("输入时点有误")
+evaluate_date_str = evaluate_year + evaluate_month.rjust(2, '0') + evaluate_day
 table_name_raw = evaluate_date_str + '偿付能力原始数据'
 table_name_labeled = evaluate_date_str + '偿付能力分类数据'
 table_name_calc = evaluate_date_str + '偿付能力最低资本数据'
+table_name_asset = evaluate_date_str + '财报口径资产数据'
 sql_drop_table_raw = '''DROP TABLE ''' + table_name_raw
 sql_drop_table_labeled = '''DROP TABLE ''' + table_name_labeled
 sql_drop_table_calc = '''DROP TABLE ''' + table_name_calc
+sql_drop_table_asset = '''DROP TABLE ''' + table_name_asset
 sql_delete_table_raw = '''DELETE FROM ''' + table_name_raw + ''' WHERE `id`>=0'''
 sql_delete_table_labeled = '''DELETE FROM ''' + table_name_labeled + ''' WHERE `id`>=0'''
 sql_delete_table_calc = '''DELETE FROM ''' + table_name_calc + ''' WHERE `id`>=0'''
+sql_delete_table_asset = '''DROP TABLE ''' + table_name_asset
+
 sql_create_table_raw = '''
 CREATE TABLE `''' + table_name_raw + '''` (
   `id` int NOT NULL AUTO_INCREMENT,
@@ -362,3 +368,21 @@ CREATE TABLE `''' + table_name_calc + '''` (
 )
 '''
 
+sql_create_table_asset = '''
+CREATE TABLE `''' + table_name_asset + '''` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `资产简称` varchar(255) NOT NULL,
+  `资产全称` varchar(255) NOT NULL,
+  `资产大类` varchar(255) NOT NULL,
+  `资产类型` varchar(255) NOT NULL,
+  `认可价值` double NOT NULL,
+  `应收利息` double DEFAULT NULL,
+  `账户` varchar(255) NOT NULL,
+  `资产五大类分类` varchar(255) NOT NULL,
+  `认可资产分类-小` varchar(255) NOT NULL,
+  `认可资产分类-大` varchar(255) NOT NULL,
+  `境内外` varchar(255) NOT NULL,
+  
+  PRIMARY KEY (`id`)
+)
+'''

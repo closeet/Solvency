@@ -1,6 +1,7 @@
 from datetime import datetime
 from static_parameters import *
 from process_values import *
+from database import evaluate_month, evaluate_day, evaluate_year
 
 
 def check_not_null(data):
@@ -76,7 +77,7 @@ def clean_null(data_type):
         return '未提供数据'
     if data_type == 'datetime':
         global evaluate_year, evaluate_month, evaluate_day
-        return datetime(evaluate_year, evaluate_month, evaluate_day)
+        return datetime(int(evaluate_year), int(evaluate_month), int(evaluate_day))
 
 
 def clean_null_value(data_type):
@@ -172,7 +173,7 @@ class AssetData:
     @property
     def labeled_data(self):
         labeled_data = {'穿透情况': self.penetration_type, '是否穿透': self.penetration,
-                        '基础/非基础--底层': self.basic_after_penetration, '基础/非基础--表层': self.basic_after_penetration,
+                        '基础/非基础--底层': self.basic_after_penetration, '基础/非基础--表层': self.basic_before_penetration,
                         '境内外': self.foreign_invest, '资产分类--表层': self.asset_type_surface,
                         '资产大类--表层': self.asset_general_type_surface, '资产广类--表层': self.asset_type_more_general_surface,
                         '资产广类': self.asset_type_more_general}
@@ -186,7 +187,7 @@ class AssetData:
 
     @property
     def penetration_type(self):
-        if self.data['表层资产简称'] is not None and self.data['资产简称'] == self.data['表层资产简称']:
+        if self.data['表层资产简称'] is not None and (self.data['资产全称'] == self.data['表层资产全称'] or self.data['资产简称'] == self.data['表层资产简称'])  and self.data['资产类型'] == self.data['表层资产类型']:
             return '豁免'
         elif self.data['表层资产简称'] is not None:
             return '穿透'

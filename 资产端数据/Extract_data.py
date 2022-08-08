@@ -1,10 +1,12 @@
 import openpyxl
 import re
-from process_values import ws_cell
 import time
 import os
-import numpy as np
 import pandas as pd
+
+
+def ws_cell(ws, row_num, col_num):
+    return ws.cell(row=row_num, column=col_num).value
 
 
 def extract_data1(path):
@@ -54,6 +56,12 @@ def extract_data1(path):
     ls_value_change = []
     for key_, value_ in dict_code_name.items():
         if value_.find('公允价值变动') + 1:
+            print(key_)
+            ls_value_change.append(key_)
+        print(value_)
+        print(value_.find('估值增值'))
+        if value_.find('估值增值') + 1:
+            print(key_)
             ls_value_change.append(key_)
 
 
@@ -87,13 +95,17 @@ def extract_data1(path):
         row_output = index + 2
         ws_output.cell(row=row_output, column=1).value = item
         ws_output.cell(row=row_output, column=2).value = ls_row_name[index]
-        ws_output.cell(row=row_output, column=3).value = float(ls_row_cost[index].replace(',', ''))
-        ws_output.cell(row=row_output, column=4).value = float(ls_row_value[index].replace(',', ''))
+        if isinstance(ls_row_cost[index], str):
+            ws_output.cell(row=row_output, column=3).value = float(ls_row_cost[index].replace(',', ''))
+            ws_output.cell(row=row_output, column=4).value = float(ls_row_value[index].replace(',', ''))
+        else:
+            ws_output.cell(row=row_output, column=3).value = float(ls_row_cost[index])
+            ws_output.cell(row=row_output, column=4).value = float(ls_row_value[index])
     wb_data.save(path[:-5] + '输出.xlsx')
 
 
 time_start = time.time()
-path_folder = '偿二代表-6.29（华安）'
+path_folder = 'D:\偿二代数据库\dist\\728估值表\权益估值表'
 ls_path = os.listdir(path_folder)
 ls_path = [path for path in ls_path if path[-7:] != '输出.xlsx']
 print(ls_path)
@@ -101,3 +113,5 @@ for path_ in ls_path:
     extract_data1(path_folder + '/' + path_)
 time_end = time.time()
 print('用时{}秒'.format(time_end - time_start))
+input()
+

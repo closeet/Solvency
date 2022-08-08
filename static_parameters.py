@@ -4,14 +4,13 @@ from process_values import ws_cell
 from process_values import max_row
 
 
-def serialize(ls, filename):
-    with open(filename, 'wb') as file:
-        pickle.dump(ls, file)
+def read_list(ws, column):
+    return [ws_cell(ws, row_num, column) for row_num in range(2, ws.max_row+1) if ws_cell(ws, row_num, column) is not None]
 
 
-def deserialize(filename):
-    with open(filename, 'rb') as file:
-        return pickle.load(file)
+def read_dict(ws, key_col, value_col):
+    return {ws_cell(ws, row_num, key_col): ws_cell(ws, row_num, value_col) for row_num in range(2, ws.max_row + 1)
+            if ws_cell(ws, row_num, key_col) is not None}
 
 
 wb_data_rule = openpyxl.load_workbook('数据规则.xlsx')
@@ -23,6 +22,8 @@ ws_rule_k = wb_data_rule['k1,k2']
 ws_rule_others = wb_data_rule['其他']
 ws_penetration_exempt = wb_data_rule['豁免穿透资产类型']
 ws_vague_value = wb_data_rule['模糊字段']
+ws_rule_accounting = wb_data_rule['财务数据科目']
+
 
 dict_deposit_col_name_self = {'购买成本': '存款金额', '认可价值': '认可价值', '应收利息': '应收利息', '存款银行类型': '银行类型', '资产类型': '存款类型'}
 ls_deposit_col_name = ['资产简称', '资产全称', '资产大类', '资产类型', '交易对手', '购买成本', '认可价值', '应收利息', '账户', '存款银行类型', '银行资本充足率',
@@ -39,8 +40,8 @@ ls_col_all = [ws_cell(ws_rule_type, row_num, 2) for row_num in range(1, max_row(
 ls_col_non_invest = ['资产简称', '资产大类', '资产类型', '交易对手', '认可价值', '应收利息', '账户', '所在城市', '投资时间', '计量属性',
                      '账面价值', '是否是享受各级政府保费补贴的业务', '账龄']
 
-ls_core_city = [ws_cell(ws_rule_others, row_num, 3) for row_num in range(2, ws_rule_others.max_row + 1) if
-                ws_cell(ws_rule_others, row_num, 3) is not None]
+ls_core_city = read_list(ws_rule_others, 3)
+
 dict_country_currency = {ws_cell(ws_rule_others, row_num, 6): ws_cell(ws_rule_others, row_num, 7) for row_num in
                          range(2, ws_rule_others.max_row + 1) if ws_cell(ws_rule_others, row_num, 6) is not None}
 dict_currency_country = {currency: [item[0] for item in dict_country_currency.items() if item[1] == currency]
@@ -48,17 +49,16 @@ dict_currency_country = {currency: [item[0] for item in dict_country_currency.it
 dict_country_development = {ws_cell(ws_rule_others, row_num, 6): ws_cell(ws_rule_others, row_num, 8) for row_num in
                             range(2, ws_rule_others.max_row + 1) if ws_cell(ws_rule_others, row_num, 6) is not None}
 ls_country_developing = [items[0] for items in dict_country_development.items() if items[1] == '新兴市场']
-dict_risk_type = {ws_cell(ws_rule_others, row_num, 4): ws_cell(ws_rule_others, row_num, 5) for row_num in
-                  range(2, ws_rule_others.max_row + 1) if ws_cell(ws_rule_others, row_num, 4) is not None}
-dict_type_general = {ws_cell(ws_rule_others, row_num, 9): ws_cell(ws_rule_others, row_num, 10) for row_num in
-                     range(2, ws_rule_others.max_row + 1) if ws_cell(ws_rule_others, row_num, 9) is not None}
+dict_risk_type = read_dict(ws_rule_others, 4, 5)
+dict_type_general = read_dict(ws_rule_others, 9, 10)
+
 dict_rule_null = {ws_cell(ws_rule_null, row_num, 1): [ws_cell(ws_rule_null, 1, col) for col in
                                                       range(2, ws_rule_null.max_column + 1)
                                                       if ws_cell(ws_rule_null, 1, col) is not None and
                                                       ws_cell(ws_rule_null, row_num, col) == 1]
                   for row_num in range(2, ws_rule_null.max_row + 1) if ws_cell(ws_rule_null, row_num, 1) is not None}
 dict_rule_type = {ws_cell(ws_rule_type, row_num, 2): ws_cell(ws_rule_type, row_num, 3) for row_num in
-                  range(1, ws_rule_type.max_row + 1) if ws_cell(ws_rule_type, row_num, 2) is not None}
+                  range(1, ws_rule_type.max_row+1) if ws_cell(ws_rule_type, row_num, 2) is not None}
 dict_rule_valid = {ws_cell(ws_rule_valid, 1, col_num): [ws_cell(ws_rule_valid, row_num, col_num) for row_num in
                                                         range(1, ws_rule_valid.max_row + 1) if
                                                         ws_cell(ws_rule_valid, row_num, col_num) is not None]
@@ -74,9 +74,7 @@ dict_rule = {'not_null': dict_rule_null, 'type': dict_rule_type, 'valid': dict_r
 ls_null_values = {'无', '-'}
 
 dict_asset_type_proportion = {'权益': 0.25, '房地产': 0.25, '其他': 0.25, '境外': 0.15}
-ls_penetration_exempt_type = [ws_cell(ws_penetration_exempt, row_num, 1) for row_num in
-                              range(2, ws_penetration_exempt.max_row + 1) if ws_cell(ws_penetration_exempt, row_num, 1)
-                              is not None]
+ls_penetration_exempt_type = read_list(ws_penetration_exempt, 1)
 
 dict_vague_value_bank = {ws_cell(ws_vague_value, 2, col_num):
                              [ws_cell(ws_vague_value, row_num, col_num) for row_num in
@@ -90,3 +88,18 @@ dict_vague_asset_5_types = {ws_cell(ws_vague_value, 2, col_num):
                          for col_num in range(1, ws_vague_value.max_column+1) if ws_cell(ws_vague_value, 1, col_num) == '五大类'}
 
 dict_vague_value = {'发行银行类型': dict_vague_value_bank, '存款银行类型': dict_vague_value_bank, '资产五大类分类': dict_vague_asset_5_types}
+dict_type_recognised_asset_s = read_dict(ws_rule_others, 11, 12)
+dict_type_recognised_asset_b = read_dict(ws_rule_others, 11, 13)
+
+ls_counter_party_exempt = read_list(ws_rule_others, 14)
+ls_bs_subject = read_list(ws_rule_accounting, 1)
+ls_income_statement_subject = read_list(ws_rule_accounting, 2)
+ls_cash_flow_subject = read_list(ws_rule_accounting, 3)
+ls_subject_detail_1 = read_list(ws_rule_accounting, 4)
+ls_subject_detail_2 = read_list(ws_rule_accounting, 6)
+
+ls_subject_detail_2_name = read_list(ws_rule_accounting, 6)
+
+
+
+

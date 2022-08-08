@@ -125,7 +125,7 @@ class MinCapital(AssetData):
             else:
                 pass
         elif asset_type in ls_bond_spreads:
-            if rating == 'AAA':
+            if rating in ['AAA+', 'AAA', 'AAA-']:
                 if dur > 5:
                     return dur * 0.015
                 elif 0 <= dur <= 5:
@@ -377,7 +377,10 @@ class MinCapital(AssetData):
     def k_concentration_counter_party(self):
         global ls_counter_party
         if self.labeled_data['交易对手'] in ls_counter_party:
-            return 0.4
+            if self.labeled_data['资产大类'] in ['政府债券', '投资性房地产'] or self.labeled_data['交易对手'] in ls_counter_party_exempt:
+                return 0
+            else:
+                return 0.4
         else:
             return 0
 
@@ -418,9 +421,9 @@ class MinCapital(AssetData):
     def interest_minimum_capital(self):
         if self.labeled_data['应收利息'] is not None:
             if self.minimum_capital_type == '利差':
-                if self.labeled_data['信用评级'] == 'AAA' or self.asset_type in ls_bond_low_risk:
+                if self.labeled_data['信用评级'] in ['AAA+', 'AAA', 'AAA-'] or self.asset_type in ls_bond_low_risk:
                     rf_interest = 0.006
-                elif self.labeled_data['信用评级'] in ['AA+', 'AA', 'AA-']:
+                elif self.labeled_data['信用评级'] in ['AA+', 'AA', 'AA-', 'A-1']:
                     rf_interest = 0.015
                 elif self.labeled_data['信用评级'] in ['A+', 'A', 'A-']:
                     rf_interest = 0.025
@@ -437,7 +440,7 @@ class MinCapital(AssetData):
     @property
     def surface_minimum_capital(self):
         if self.labeled_data['表层资产类型'] in ['债权投资计划', '资产支持计划', '固定收益类信托计划']:
-            if self.labeled_data['表层资产信用评级'] == 'AAA':
+            if self.labeled_data['表层资产信用评级'] in ['AAA+', 'AAA', 'AAA-']:
                 rf_surface = 0.01
             elif self.labeled_data['表层资产信用评级'] == 'AA+':
                 rf_surface = 0.015
@@ -453,7 +456,7 @@ class MinCapital(AssetData):
                 k_surface = -0.2
             else:
                 k_surface = 0
-            return self.labeled_data['表层资产认可价值'] * rf_surface * (1 + k_surface)
+            return self.labeled_data['表层资产认可价值'] * rf_surface * (1 + k_surface + self.k_concentration_counter_party)
         else:
             return 0
 
@@ -478,11 +481,11 @@ class MinCapital(AssetData):
 
     @property
     def counter_party_min_cap(self):
-        return (self.k_concentration_counter_party / self.k_sum) * self.minimum_capital
+        return (self.k_concentration_counter_party / self.k_sum) * (self.total_min_cap)
 
     @property
     def asset_type_min_cap(self):
-        return (self.k_concentration_asset_type / self.k_sum) * self.minimum_capital
+        return (self.k_concentration_asset_type / self.k_sum) * (self.total_min_cap)
 
     @property
     def calc_data(self):
